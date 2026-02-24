@@ -235,9 +235,18 @@ internal extension ESTabBar /* Layout */ {
         
         if layoutBaseSystem {
             // System itemPositioning
-            for (idx, container) in containers.enumerated(){
-                if idx < tabBarButtons.count {
+            let canUseSystemLayout = tabBarButtons.count >= containers.count &&
+                !tabBarButtons.prefix(containers.count).contains { $0.frame.isEmpty }
+            if canUseSystemLayout {
+                for (idx, container) in containers.enumerated(){
                     container.frame = tabBarButtons[idx].frame
+                }
+            } else {
+                // Fallback: iOS 26などで tabBarButtons が未揃い／frame未設定のとき、コンテナを等幅配置
+                let width = bounds.size.width / CGFloat(containers.count)
+                let height = bounds.size.height
+                for (idx, container) in containers.enumerated(){
+                    container.frame = CGRect(x: width * CGFloat(idx), y: 0, width: width, height: height)
                 }
             }
         } else {
