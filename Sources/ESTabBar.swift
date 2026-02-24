@@ -243,10 +243,12 @@ internal extension ESTabBar /* Layout */ {
                 }
             } else {
                 // Fallback: iOS 26などで tabBarButtons が未揃い／frame未設定のとき、コンテナを等幅配置
+                // 高さは標準タブバー(49pt)に揃え、アイコンと文字の間が既存表示に近くなるようにする
                 let width = bounds.size.width / CGFloat(containers.count)
-                let height = bounds.size.height
+                let height = min(bounds.size.height, 49.0)
+                let y = (bounds.size.height - height) / 2.0
                 for (idx, container) in containers.enumerated(){
-                    container.frame = CGRect(x: width * CGFloat(idx), y: 0, width: width, height: height)
+                    container.frame = CGRect(x: width * CGFloat(idx), y: y, width: width, height: height)
                 }
             }
         } else {
