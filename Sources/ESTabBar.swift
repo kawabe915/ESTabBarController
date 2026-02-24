@@ -155,6 +155,14 @@ open class ESTabBar: UITabBar {
     open override func layoutSubviews() {
         super.layoutSubviews()
         self.updateLayout()
+        // レイアウト毎にシステムの UITabBarButton を非表示にし、二重表示を防ぐ
+        if !isCustomizing, let cls = NSClassFromString("UITabBarButton") {
+            for subview in subviews {
+                if subview.isKind(of: cls) {
+                    subview.isHidden = true
+                }
+            }
+        }
     }
     
     open override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -372,7 +380,6 @@ internal extension ESTabBar /* Actions */ {
     
     @objc func select(itemAtIndex idx: Int, animated: Bool) {
         let newIndex = max(0, idx)
-        let currentIndex = (selectedItem != nil) ? (items?.firstIndex(of: selectedItem!) ?? -1) : -1
         guard newIndex < items?.count ?? 0, let item = self.items?[newIndex], item.isEnabled == true else {
             return
         }
@@ -397,12 +404,15 @@ internal extension ESTabBar /* Actions */ {
             return
         }
         
+        let currentIndex = (selectedItem != nil) ? (items?.firstIndex(of: selectedItem!) ?? -1) : -1
+        
         if currentIndex != newIndex {
-            if currentIndex != -1 && currentIndex < items?.count ?? 0{
-                if let currentItem = items?[currentIndex] as? ESTabBarItem {
-                    currentItem.contentView.deselect(animated: animated, completion: nil)
-                } else if self.isMoreItem(currentIndex) {
-                    moreContentView?.deselect(animated: animated, completion: nil)
+            // 別タブをタップ: 全タブを非選択にしてからタップしたタブのみ選択（複数選択を防ぐ）
+            for (index, aItem) in (items ?? []).enumerated() {
+                if let aItem = aItem as? ESTabBarItem {
+                    aItem.contentView.deselect(animated: false, completion: nil)
+                } else if self.isMoreItem(index) {
+                    moreContentView?.deselect(animated: false, completion: nil)
                 }
             }
             if let item = item as? ESTabBarItem {
@@ -410,7 +420,8 @@ internal extension ESTabBar /* Actions */ {
             } else if self.isMoreItem(newIndex) {
                 moreContentView?.select(animated: animated, completion: nil)
             }
-        } else if currentIndex == newIndex {
+        } else {
+            // 同じタブを再タップ: reselect（例: ナビの popToRoot）
             if let item = item as? ESTabBarItem {
                 item.contentView.reselect(animated: animated, completion: nil)
             } else if self.isMoreItem(newIndex) {
