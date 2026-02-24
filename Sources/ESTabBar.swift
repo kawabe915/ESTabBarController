@@ -236,7 +236,7 @@ internal extension ESTabBar /* Layout */ {
         if layoutBaseSystem {
             // System itemPositioning
             for (idx, container) in containers.enumerated(){
-                if idx < tabBarButtons.count, !tabBarButtons[idx].frame.isEmpty {
+                if idx < tabBarButtons.count {
                     container.frame = tabBarButtons[idx].frame
                 }
             }
