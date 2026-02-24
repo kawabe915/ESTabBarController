@@ -221,6 +221,14 @@ internal extension ESTabBar /* Layout */ {
             for (_, container) in containers.enumerated(){
                 container.isHidden = false
             }
+            // フォールバック時はシステムボタンが残ることがあるため、ESTabBarItem の場合は全て非表示にする
+            let useFallbackLayout = !(tabBarButtons.count >= containers.count &&
+                !tabBarButtons.prefix(containers.count).contains { $0.frame.isEmpty })
+            if useFallbackLayout {
+                for btn in tabBarButtons {
+                    btn.isHidden = true
+                }
+            }
         }
         
         var layoutBaseSystem = true
@@ -242,13 +250,15 @@ internal extension ESTabBar /* Layout */ {
                     container.frame = tabBarButtons[idx].frame
                 }
             } else {
-                // Fallback: iOS 26などで tabBarButtons が未揃い／frame未設定のとき、コンテナを等幅配置
-                // 高さは標準タブバー(49pt)に揃え、アイコンと文字の間が既存表示に近くなるようにする
+                // Fallback: iOS 26などで tabBarButtons が未揃い／frame未設定のとき、コンテナを等幅・フル高さで配置
+                // フル高さにすることで選択中タブの紺背景がフッター全体になり、タッチもコンテナに届く
                 let width = bounds.size.width / CGFloat(containers.count)
-                let height = min(bounds.size.height, 49.0)
-                let y = (bounds.size.height - height) / 2.0
+                let height = bounds.size.height
                 for (idx, container) in containers.enumerated(){
-                    container.frame = CGRect(x: width * CGFloat(idx), y: y, width: width, height: height)
+                    container.frame = CGRect(x: width * CGFloat(idx), y: 0, width: width, height: height)
+                }
+                for container in containers {
+                    bringSubviewToFront(container)
                 }
             }
         } else {
